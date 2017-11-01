@@ -14,15 +14,42 @@ data Exp = Val Double | Id String | UnApp UnOp Exp | BinApp BinOp Exp Exp
 type Env = [(String, Double)]
 
 
+unOpfuncs = [ (Neg, (negate))
+            , (Sin, (sin))
+            , (Cos, (cos))
+            , (Log, (log))
+            ]
+
+binOpfuncs = [ (Add, (+))
+             , (Mul, (*))
+             , (Div, (/))
+             ]
 
 lookUp :: Eq a => a -> [(a, b)] -> b
-lookUp = error "TODO implement lookUp"
+lookUp key values
+  = fromJust (lookup key values) 
 
 eval :: Exp -> Env -> Double
-eval = error "TODO: implement eval"
+eval (Val x) _
+  = x
+eval (Id str) env
+  = lookUp str env
+eval (BinApp binOp exp exp') env
+  = (lookUp binOp binOpfuncs) (eval exp env) (eval exp' env)
+eval (UnApp unOp exp) env
+  = (lookUp unOp unOpfuncs) (eval exp env)
 
 diff :: Exp -> String -> Exp
-diff = error "TODO: implement diff"
+diff (BinApp Mul exp exp') str
+  = BinApp Add (BinApp Mul (diff exp str) (Val 1.0)) (BinApp Mul (diff exp' str) (Val 1.0))
+--diff (BinApp Add exp exp') str
+--  = 
+--diff (BinApp Div exp exp') str
+--  =
+diff (UnApp Sin exp) str
+  = BinApp Mul (diff exp str) (UnApp Cos exp)
+diff (UnApp Cos exp) str
+  = BinApp Mul (UnApp Neg (diff exp str)) (UnApp Sin exp)
 
 maclaurin :: Exp -> Double -> Int -> Double
 maclaurin = error "TODO: implement maclaurin"
