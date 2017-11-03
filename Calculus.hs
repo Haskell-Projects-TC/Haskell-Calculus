@@ -49,8 +49,9 @@ diff (BinApp Mul exp exp') str
   = BinApp Add (BinApp Mul exp (diff exp' str)) (BinApp Mul (diff exp str) exp') 
 diff (BinApp Add exp exp') str
   = BinApp Add (diff exp str) (diff exp' str) 
-diff (BinApp Div exp exp') str
-  = BinApp Div (BinApp Add (BinApp Mul exp' (diff exp str)) (UnApp Neg (BinApp Mul exp (diff exp' str)))) (BinApp Mul exp' exp')
+diff (BinApp Div exp1 exp2) str
+  = BinApp Div (BinApp Add (BinApp Mul (diff exp1 str) exp2) 
+    (UnApp Neg (BinApp Mul exp1 (diff exp2 str)))) (BinApp Mul exp2 exp2)
 diff (UnApp Sin exp) str
   = BinApp Mul (UnApp Cos exp) (diff exp str)
 diff (UnApp Cos exp) str
