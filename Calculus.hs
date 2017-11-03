@@ -40,22 +40,59 @@ eval (UnApp unOp exp) env
   = (lookUp unOp unOpfuncs) (eval exp env)
 
 diff :: Exp -> String -> Exp
+diff (Val _) _
+  = Val 0.0
+diff (Id x) str
+  | x == str   = Val 1.0
+  | otherwise  = Val 0.0
 diff (BinApp Mul exp exp') str
-  = BinApp Add (BinApp Mul (diff exp str) (Val 1.0)) (BinApp Mul (diff exp' str) (Val 1.0))
---diff (BinApp Add exp exp') str
---  = 
---diff (BinApp Div exp exp') str
---  =
+  = BinApp Add (BinApp Mul exp (diff exp' str)) (BinApp Mul (diff exp str) exp') 
+diff (BinApp Add exp exp') str
+  = BinApp Add (diff exp str) (diff exp' str) 
+diff (BinApp Div exp exp') str
+  = BinApp Div (BinApp Add (BinApp Mul exp' (diff exp str)) (UnApp Neg (BinApp Mul exp (diff exp' str)))) (BinApp Mul exp' exp')
 diff (UnApp Sin exp) str
-  = BinApp Mul (diff exp str) (UnApp Cos exp)
+  = BinApp Mul (UnApp Cos exp) (diff exp str)
 diff (UnApp Cos exp) str
-  = BinApp Mul (UnApp Neg (diff exp str)) (UnApp Sin exp)
+  = UnApp Neg (BinApp Mul (UnApp Sin exp) (diff exp str))
+diff (UnApp Neg exp) str
+  = UnApp Neg (diff exp str)
+diff (UnApp Log exp) str
+  = BinApp Div (diff exp str) exp
 
 maclaurin :: Exp -> Double -> Int -> Double
-maclaurin = error "TODO: implement maclaurin"
-
+maclaurin exp term n
+  = sum (take n terms)  
+    where
+      terms = zipWith3 (\ a b c -> a * b * c) diffs factdivs xs
+      diffs = map (flip eval [("x", 0)]) (iterate (flip diff "x") exp)
+      factdivs = scanl (/) 1 [1..]
+      xs    = (map (term^) [0..])
+      
+      
 showExp :: Exp -> String
-showExp = error "TODO: implement showExp"
+showExp (Val x) 
+  = show x
+showExp ( Id x )
+  = x
+showExp ( BinApp Mul x y )
+  = "(" ++ showExp x ++ "*" ++ showExp y ++ ")"
+showExp ( BinApp Add x y )
+  = "(" ++ showExp x ++ "+" ++ showExp y ++ ")"
+showExp ( BinApp Div x y ) 
+  = "(" ++ showExp x ++ "/" ++ showExp y ++ ")"
+showExp ( UnApp Neg x )
+  = "-(" ++ showExp x ++ ")"
+showExp ( UnApp Sin x )
+  = "sin(" ++ showExp x ++ ")"
+showExp ( UnApp Cos x )
+  = "cos(" ++ showExp x ++ ")"
+showExp ( UnApp Log x )
+  = "log(" ++ showExp x ++ ")"
+
+
+
+
 
 ---------------------------------------------------------------------------
 -- Test cases from the spec.
